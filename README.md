@@ -37,7 +37,13 @@ The challenges are stored in `data/challs.json` in the following format:
 ```json
 {
     "Challenges": {
-        "<chall_name>": {"pano": 1, "lat": <latitude>, "lng": <longitude>, "maxZ": <max zoom [1-5]>, "flag": <flag for challenge>},
+        "<chall_name>": {
+            "pano": 1,
+            "lat": <latitude>,
+            "lng": <longitude>,
+            "maxZ": <max zoom [1-5]>,
+            "flag": <flag for challenge>
+        },
         ...
     }
 }
