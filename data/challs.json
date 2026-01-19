@@ -1,0 +1,12 @@
+{
+    "Challenges": {
+        "chall1": {
+            "panoType": 1,
+            "pano": "N4ITP5i6MJ6AAow7lRHWYw",
+            "lat": 52.2308738,
+            "lng": 21.0043232,
+            "maxZ": 5,
+            "flag": "flag{fake_flag_11111}"
+        }
+    }
+}

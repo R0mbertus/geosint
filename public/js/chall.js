@@ -2,235 +2,170 @@
 /* jshint node: true */
 'use strict';
 
-var map;
-var markers = [];
-var guess_coordinates = [];
-var check_count = 0;
-var pano_width = 32;
-var pano_height = 16;
-var center_loc = {lat: 0.00, lng: 0.00};
+let PSV = {
+    Viewer: null,
+    EquirectangularTilesAdapter: null,
+};
+
+let map;
+let marker;
+let guess_coordinates = [];
+let check_count = 0;
+
+let pano_width = 32;
+let pano_height = 16;
+let heading = 0;
 
 // list of icon names
-var iconNames = ['cat.ico', 'gamer.ico', 'hacker.ico', 'pizza.ico', 'taco.ico', 'galaxy_brain.ico', 'frogchamp.ico', 'hamhands.ico', 'justin.ico', 'caleb.ico'];
+const iconNames = [
+    'cat.ico',
+    'gamer.ico',
+    'hacker.ico',
+    'pizza.ico',
+    'taco.ico',
+    'galaxy_brain.ico',
+    'frogchamp.ico',
+    'hamhands.ico',
+    'justin.ico',
+    'caleb.ico',
+];
 
 // Get challName
-var link = document.location.href.split("/");
-var challComp;
-if (link[link.length - 1].length == 0) {
-    challComp = link[link.length - 2];
+const link = document.location.href.split('/');
+let chall;
+if (link[link.length - 1].length === 0) {
+    chall = link[link.length - 2];
 } else {
-    challComp = link[link.length - 1];
+    chall = link[link.length - 1];
 }
-var parts = challComp.split("-");
-var compName = parts[0];
-var challName = parts[1];
-var heading = 0;
+const challName = chall;
+
+function getCookie(name) {
+    const cookies = document.cookie.split('; ');
+    for (const cookie of cookies) {
+        const [k, v] = cookie.split('=');
+        if (k === name) return v;
+    }
+    return null;
+}
+
+function updateSubmitButtonReady() {
+    const sb = document.getElementById('submit');
+    sb.style.backgroundColor = 'rgb(109, 185, 52)';
+    sb.style.color = 'black';
+    sb.innerHTML = 'Submit';
+}
+
+function placeMarker(latlng) {
+    if (marker) {
+        marker.remove();
+        marker = null;
+    }
+
+    guess_coordinates = [latlng.lat, latlng.lng];
+
+    let icon = getCookie('icon') || 'hacker.ico';
+    if (!iconNames.includes(icon)) {
+        icon = 'hacker.ico';
+    }
+
+    const leafletIcon = L.icon({
+        iconUrl: `/img/icons/${icon}`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+    });
+
+    marker = L.marker([latlng.lat, latlng.lng], { icon: leafletIcon }).addTo(map);
+
+    if (check_count === 0) {
+        check_count += 1;
+        updateSubmitButtonReady();
+    }
+}
+
+function initMap() {
+    map = L.map('map', {
+        zoomControl: true,
+        attributionControl: false,
+        worldCopyJump: true,
+    }).setView([0, 0], 1);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+    }).addTo(map);
+
+    map.getContainer().style.cursor = 'crosshair';
+
+    map.on('click', (event) => {
+        placeMarker(event.latlng);
+    });
+}
+
+function initPanorama() {
+    if (!PSV.Viewer) {
+        throw new Error('Photo Sphere Viewer not configured.');
+    }
+    if (!PSV.EquirectangularTilesAdapter) {
+        throw new Error('EquirectangularTilesAdapter not configured.');
+    }
+
+    const tileSize = 512;
+    const maxZ = Math.max(0, Math.round(Math.log2(pano_width)));
+
+    // Uses the highest zoom tiles already downloaded by pull_challs.js
+    const origin = document.location.origin;
+    const panorama = {
+        width: tileSize * pano_width,
+        cols: pano_width,
+        rows: pano_height,
+        tileUrl: (col, row) => `${origin}/img/${challName}/tile_${col}_${row}_${maxZ}.jpeg`,
+    };
+
+    // eslint-disable-next-line no-new
+    new PSV.Viewer({
+        container: document.querySelector('#pano'),
+        adapter: PSV.EquirectangularTilesAdapter,
+        panorama,
+        navbar: false,
+        defaultYaw: `${heading}deg`,
+        mousewheelCtrlKey: false,
+    });
+}
 
 async function initialize() {
-    var panoInfo;
     check_count = 0;
 
-    // GET info.json
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", '/info.json', false); // false for synchronous request
-    xhr.send( null );
-    if (xhr.status == 200) {
-    	var infoJson = JSON.parse(xhr.responseText);
-    	if (infoJson.hasOwnProperty(compName) && infoJson[compName].hasOwnProperty(challName)) {
-	    panoInfo = infoJson[compName][challName];
-	    if (panoInfo.hasOwnProperty("width") && panoInfo.hasOwnProperty("height")) {
-	    	pano_width = panoInfo.width;
-	    	pano_height = panoInfo.height;
-	    }
-	    if (panoInfo.hasOwnProperty("heading")) {
-		heading = panoInfo.heading;
-		console.log(`now have heading ${heading}`);
-	    }
-	}
-    }
-    
     document.getElementById('chall-title').innerHTML = '<h2>' + challName + '</h2>';
-    document.getElementById('chall-result').innerHTML = "Result: ";
+    document.getElementById('chall-result').innerHTML = 'Result: ';
 
-    // Map and Map options
-    var map = new google.maps.Map(document.getElementById('map'), {
-      center: center_loc,
-      zoom: 1,
-      streetViewControl: false,
-      disableDefaultUI: true,
-      draggableCursor: 'crosshair',
-    });
-
-    // Add Map's Zoom Controls
-    var zoomControlDiv = document.createElement('div');
-    var zoomControl = new mapZoomControl(zoomControlDiv, map);
-    zoomControlDiv.index = 1;
-    map.controls[google.maps.ControlPosition.TOP_LEFT].push(zoomControlDiv);
-
-    // Map Listener 
-    google.maps.event.addListener(map, 'click', function(event) {
-	placeMarker(event.latLng);
-        if (check_count == 0){
-          check_count += 1;
-	  var sb = document.getElementById("submit");
-	  sb.style.backgroundColor = "rgb(109, 185, 52)";
-	  sb.style.color = "black";
-	  sb.innerHTML = "Submit";
-        }
-     });
-     
-    // Map Marker Options
-    function placeMarker(location) {
-    	deleteMarkers();
-        guess_coordinates = [];
-	
-	
-	var cookies = document.cookie.split('; ');
-	var icon = 'hacker.ico';
-	for (const cookie of cookies) {
-    	    var parts = cookie.split('=');
-    	    if (parts[0] == "icon" && iconNames.includes(parts[1])) {
-        	icon = parts[1];
-    	    }
-	}
-	
-        var marker = new google.maps.Marker({
-            position: location, 
-            map: map,
-	    icon: `/img/icons/${icon}`, // get user's icon choice
-        });
-        markers.push(marker);
-        guess_coordinates.push(marker.getPosition().lat(),marker.getPosition().lng());
-    }
-
-    // Street View
-    var pano = document.getElementById('pano');
-    var panoOptions = {
-	pano: challName,
-	visible: true,
-	panControlOptions: {position: google.maps.ControlPosition.LEFT_CENTER},
-	zoomControlOptions: {position: google.maps.ControlPosition.LEFT_CENTER}
-    };
-    const panorama = new google.maps.StreetViewPanorama(pano, panoOptions);
-    panorama.registerPanoProvider(getCustomPanorama, {cors: true});
+    initMap();
+    initPanorama();
 }
 
-// Return a pano image given the panoID.
-function getCustomPanoramaTileUrl(pano, zoom, tileX, tileY) {
-    const origin = document.location.origin;
-    return `${origin}/img/${compName}/${challName}/tile_${tileX}_${tileY}_${zoom}.jpeg`;
-}
-
-// Construct the appropriate StreetViewPanoramaData given the passed pano IDs.
-function getCustomPanorama(pano) {
-    return {
-	tiles: {
-	    tileSize: new google.maps.Size(512, 512),
-	    worldSize: new google.maps.Size(512*pano_width, 512*pano_height),
-	    centerHeading: heading,
-	    getTileUrl: getCustomPanoramaTileUrl,
-	},
-    };
-}
-
-function setMapOnAll(map) {
-    for (var i = 0; i < markers.length; i++) {
-     	markers[i].setMap(map);
-    }
-}
-
-function showMarkers() {
-    setMapOnAll(map);
-}
-
-function deleteMarkers() {
-    setMapOnAll(null); // clear markers
-    markers = [];
-}
-
-// Checks distance from challenge location. If close enough, give flag
-function submit() {
+// Expose submit() for the inline onclick in chall.html
+async function submit() {
     const json = JSON.stringify(guess_coordinates);
-    console.log(json);
 
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", document.location.href + "/submit", false); // false for synchronous request
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.send(json);
-    
-    var resp = xhr.responseText;
-    console.log("response: " + resp);
-    document.getElementById("chall-result").innerHTML = resp;
-}
-
-
-// ZoomControl adds +/- button for the map
-function mapZoomControl(controlDiv, map) {
-
-    // Creating divs & styles for custom zoom control
-    controlDiv.style.padding = '5px';
-
-    // Set CSS for the control wrapper
-    var controlWrapper = document.createElement('div');
-    controlWrapper.style.backgroundColor = 'transparent';
-    controlWrapper.style.cursor = 'pointer';
-    controlWrapper.style.textAlign = 'center';
-    controlWrapper.style.width = '32px'; 
-    controlWrapper.style.height = '64px';
-    controlWrapper.style.marginLeft = '2px';
-    controlWrapper.style.marginRight = '2px';
-    controlDiv.appendChild(controlWrapper);
-
-    // Set CSS for the zoomIn
-    var zoomInButton = document.createElement('div');
-    zoomInButton.style.width = '24px'; 
-    zoomInButton.style.height = '24px';
-    zoomInButton.style.borderRadius = '24px';
-    zoomInButton.style.marginBottom = '6px';
-    zoomInButton.style.backgroundColor = 'white';
-    zoomInButton.style.backgroundImage = 'url("/img/plus_sign.svg")';
-    controlWrapper.appendChild(zoomInButton);
-
-    // Set CSS for the zoomOut
-    var zoomOutButton = document.createElement('div');
-    zoomOutButton.style.width = '24px'; 
-    zoomOutButton.style.height = '24px';
-    zoomOutButton.style.borderRadius = '24px';
-    zoomOutButton.style.marginTop = '6px';
-    zoomOutButton.style.backgroundColor = 'white';
-    zoomOutButton.style.backgroundImage = 'url("/img/minus_sign.svg")';
-    controlWrapper.appendChild(zoomOutButton);
-
-    // Setup the click event listener - zoomIn
-
-    google.maps.event.addDomListener(zoomInButton, 'click', function() {
-	map.setZoom(map.getZoom() + 1);
-	console.log("Zoom: " + map.getZoom());
-	mapZoomEvent(zoomOutButton, zoomInButton, map);
+    const resp = await fetch(document.location.href + '/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: json,
     });
 
-    // Setup the click event listener - zoomOut
-    google.maps.event.addDomListener(zoomOutButton, 'click', function() {
-    	map.setZoom(map.getZoom() - 1);
-    	console.log("Zoom: " + map.getZoom());
-    	mapZoomEvent(zoomOutButton, zoomInButton, map);
-    });  
+    const text = await resp.text();
+    document.getElementById('chall-result').innerHTML = text;
 }
 
-function mapZoomEvent(zoomOutButton, zoomInButton, map) {
-    if (map.getZoom() == 22) {
-        zoomInButton.style.backgroundColor = 'rgb(255,255,255,0.5)';
-    } else if (map.getZoom() == 0) {
-        zoomOutButton.style.backgroundColor = 'rgb(255,255,255,0.5)';
-    } else {
-        zoomInButton.style.backgroundColor = 'white';
-        zoomOutButton.style.backgroundColor = 'white';
-    }
+export function boot({ Viewer, EquirectangularTilesAdapter }) {
+    PSV = { Viewer, EquirectangularTilesAdapter };
+
+    // keep the inline onclick working
+    window.submit = submit;
+
+    window.addEventListener('load', () => {
+        initialize().catch((err) => {
+            console.error(err);
+            document.getElementById('chall-result').innerHTML = 'Error: ' + err.message;
+        });
+    });
 }
-
-// panoramaZoomControl adds +/- button for the panorama
-function panoramaZoomControl(controlDiv, map) {
-    // TODO - add custom pano buttons	
-}
-
-

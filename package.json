@@ -1,0 +1,16 @@
+{
+  "name": "geosint",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "pull": "node scripts/pull_challs.js"
+  },
+  "dependencies": {
+    "body-parser": "^2.2.2",
+    "express": "^5.2.1"
+  }
+}

@@ -1,8 +1,10 @@
 node_modules/
-package.json
-package-lock.json
-public/img/chall*
-public/img/practice*
-server.key
-server.cert
-secret.json
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+.DS_Store
+
+# Ignore downloaded challenges
+public/img/*
+!public/img/icons/**
+!public/img/*.svg

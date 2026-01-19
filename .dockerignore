@@ -1,0 +1,16 @@
+.git
+.gitignore
+node_modules
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+.DS_Store
+
+# Downloaded panorama tiles can be huge; fetch them during docker build instead.
+public/img/**/tile_*.jpeg
+public/img/**/tile_*.jpg
+public/img/**/tile_*.png
+
+# Keep UI assets
+!public/img/icons/**
+!public/img/*.svg

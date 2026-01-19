@@ -1,0 +1,6 @@
+services:
+  main:
+    image: geosint:latest
+    build: .
+    ports:
+      - "6958:6958"

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Geosint</title>
+    <link rel="stylesheet" href="/css/chall.css" type="text/css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5.14.1/index.css">
+
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.179.0/build/three.module.js",
+        "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core@5.14.1/index.module.js",
+        "@photo-sphere-viewer/equirectangular-tiles-adapter": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/equirectangular-tiles-adapter@5.14.1/index.module.js"
+      }
+    }
+  </script>
+</head>
+<div id="hud">
+    <p id="chall-title"></p>
+    <p id="chall-result"></p>
+</div>
+
+<body>
+    <div id="pano" style="position: absolute"></div>
+    <div id="outer-map" style="position: relative; height: 100%; width: 30%; float: right">
+        <div id="map-box">
+            <div id="map" style="position: absolute; bottom: 40px;"></div>
+            <button type="button" class="btn-submit-location" onclick=submit() id="submit">Select Location</button>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import { Viewer } from '@photo-sphere-viewer/core';
+        import { EquirectangularTilesAdapter } from '@photo-sphere-viewer/equirectangular-tiles-adapter';
+        import { boot } from '/js/chall.js';
+
+        boot({ Viewer, EquirectangularTilesAdapter });
+    </script>
+</body>
+
+</html>

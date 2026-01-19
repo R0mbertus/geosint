@@ -1,59 +1,86 @@
 # geosint
-A CTF-style Geo OSINT website in the style of GeoGuessr
 
-**NOTE:** Still working on home page design
+Platform to host panoramic streetview like (a.k.a. geoguessr) Geo OSINT CTF challenges with. *now with less google!*
 
-## Pulling Panorama Tiles
-A big difference in how GeoGuessr runs things is how the panorama (Street View) is built. A normal sane person would just call the Google Maps JavaScript API, which runs on client-side, to gather the tiles and build the panorama all at once. The big issue there is that the user can easily fish the `panoId` from the network traffic. We don't want any cheaters around these parts :cowboy:.
+## How it works
 
-So instead, we can use `pull_challs.js` or `pull_challs_fast.js` which will query Google for the tile images and save them to `./public/img/chall*/` for all challenge information specified in `challs.json`.
+### Pulling challenge tiles
 
-**NOTE:** `pull_challs_fast.js` is MUCH faster than `pull_challs.js`, however it uses a lot of memory. Depending on your internet speed, `pull_challs_fast.js` takes about 30 seconds and `pull_challs.js` takes about 7 minutes.
+From the original repo:
 
-```sh
-$ npm install node-fetch@2
-$ mkdir ./public/img/chall1 ./public/img/chall2 # however many challs you have
-$ node pull_challs.js # OR do the fast one if you are sane and have unlimited memory
-```
+> A big difference in how GeoGuessr runs things is how the panorama (Street View) is built. A normal sane person would
+> just call the Google Maps JavaScript API, which runs on client-side, to gather the tiles and build the panorama all
+> at once. The big issue there is that the user can easily fish the panoId from the network traffic. We don't want any
+> cheaters around these parts :cowboy:.
+>
+> So instead, we can use `pull_challs.js` or `pull_challs_fast.js` which will query Google for the tile images and save
+> them to ./public/img/chall*/ for all challenge information specified in challs.json.
 
-## Files to modify
-If you would like to change the locations, you can do so by changing the below files. Check out the example files for more details.
+**Do note**: this fork only kept the `pull_challs_fast.js`, renamed to `scripts/pull_challs.js`.
 
-### challs.json
-This private file stores the challenge secret information that is used by `server.js`, `pull_challs.js`, and `pull_challs_fast.js`.
-```
+### Serving challenges
+
+In the original repo the challenges were served using google maps api for both the panorama and the map. In this fork,
+we use leaflet and leaflet-panojs to serve the panorama and leaflet with OpenStreetMap tiles for the map. This avoids
+the need for Google Maps API keys and usage limits.
+
+## Challenge format
+
+The challenges are stored in `data/challs.json` in the following format:
+
+```json
 {
-        <chall_name>: {"pano": <panorama ID>, "lat": <latitude>, "lng": <longitude>, "maxZ": <max zoom [1-5]>, "flag": <flag for challenge>},
-	...
+    "Challenges": {
+        "<chall_name>": {"pano": 1, "lat": <latitude>, "lng": <longitude>, "maxZ": <max zoom [1-5]>, "flag": <flag for challenge>},
+        ...
+    }
 }
 ```
 
-### public/info.json
-This file is optional, however it can be helpful in specifying panorama width and height for those panoramas that overlap and look weird. The start of the `initialize()` function in `public/js/chall.js` uses this file.
-```
-{
-        <chall_name>: {"width": int, "height": int}
-}
-```
+## Running
 
-## Docker Build
-Build the NodeJs image
-```sh
-docker build -t geosint .
+### Docker
+
+A `Dockerfile` and `docker-compose.yml` are provided. To build the Docker image, run:
+
+```bash
+docker compose build
+# or
+docker build -t geosint:latest .
 ```
 
-*NOTE:* The docker build automatically runs `pull_challs.js`
+Then, to run the container:
 
-Run the image
-```sh
-docker run -p 443:6958 -d geosint
+```bash
+docker compose up -d
+# or
+docker run --rm -p 6958:6958 geosint:latest # or the port of your choice
 ```
 
+### Local
 
-### Node Packages
-```sh
-npm install body-parser cookie-parser express node-fetch@2
+To run the application locally, ensure Node.js >= 20 is installed. First, install the dependencies:
+
+```bash
+npm install
+```
+
+Then, pull the challenge tiles:
+
+```bash
+npm run pull
+# or
+node scripts/pull_challs.js
+```
+
+Finally, start the server on port 6958:
+
+```bash
+npm start
+# or
+node app.js
 ```
 
 ### Shoutout
-Shoutout to [bensizelove](https://github.com/bensizelove/geoguessr)
+
+Shoutout to [bensizelove](https://github.com/bensizelove/geoguessr) and [JustHackingCo](https://github.com/JustHackingCo/geosint)
