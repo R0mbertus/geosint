@@ -4,7 +4,7 @@ Platform to host panoramic streetview like (a.k.a. geoguessr) Geo OSINT CTF chal
 
 ## How it works
 
-### Pulling challenge tiles
+### Pulling challenges
 
 From the original repo:
 
@@ -23,6 +23,12 @@ From the original repo:
 In the original repo the challenges were served using google maps api for both the panorama and the map. In this fork,
 we use leaflet and leaflet-panojs to serve the panorama and leaflet with OpenStreetMap tiles for the map. This avoids
 the need for Google Maps API keys and usage limits.
+
+### Accessing challenges
+
+In the original repo there was a homepage where all the challenges could be accessed from. In this fork, that is
+removed with the intended usage instead being to directly link to the challenge from the description in the used
+CTF host (e.g. CTFd).
 
 ## Challenge format
 
@@ -81,6 +87,13 @@ npm start
 node app.js
 ```
 
-### Shoutout
+## TODO
+
+- [x] Degoogle the part where an API key was necessary
+- [ ] Add help dropdown explaining format and usage
+- [ ] Compress downloaded tiles
+  - [ ] Possible batching?
+
+## Shoutout
 
 Shoutout to [bensizelove](https://github.com/bensizelove/geoguessr) and [JustHackingCo](https://github.com/JustHackingCo/geosint)
