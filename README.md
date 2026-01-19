@@ -97,8 +97,8 @@ node app.js
 
 - [x] Degoogle the part where an API key was necessary
 - [ ] Add help dropdown explaining format and usage
-- [ ] Compress downloaded tiles
-  - [ ] Possible batching?
+- [x] Compress downloaded tiles
+  - ~[ ] Possible batching?~
 
 ## Shoutout
 
