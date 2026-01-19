@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
 
 const fetch = global.fetch.bind(global);
 
@@ -17,7 +18,9 @@ async function saveStreetViewTile(filePath, resp) {
 
     const blob = await resp.blob();
     const ab = await blob.arrayBuffer();
-    await fs.promises.writeFile(filePath, new Uint8Array(ab));
+    // now compress with sharp
+    const compressed = await sharp(Buffer.from(ab)).webp({ quality: 70, alphaQuality: 100 }).toBuffer();
+    await fs.promises.writeFile(filePath, compressed);
     return true;
 }
 
@@ -35,7 +38,7 @@ async function pull() {
                                 ? `https://lh3.ggpht.com/p/${pano}=x${x}-y${y}-z${z}`
                                 : `https://streetviewpixels-pa.googleapis.com/v1/tile?cb_client=maps_sv.tactile&panoid=${pano}&output=tile&x=${x}&y=${y}&zoom=${z}&nbt=1&fover=2`;
 
-                        const outFile = path.join(imgDir, `tile_${x}_${y}_${z}.jpeg`);
+                        const outFile = path.join(imgDir, `tile_${x}_${y}_${z}.webp`);
 
                         const resp = await fetch(url);
                         const ok = await saveStreetViewTile(outFile, resp);

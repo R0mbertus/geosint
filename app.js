@@ -2,6 +2,7 @@ const path = require('path');
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const compression = require('compression');
 
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 6958;
@@ -9,7 +10,20 @@ const port = process.env.PORT ? Number(process.env.PORT) : 6958;
 const publicDir = path.join(__dirname, 'public');
 const challViewPath = path.join(__dirname, 'views', 'chall.html');
 
-app.use(express.static(publicDir));
+// Enable gzip compression for all responses
+app.use(compression());
+
+// Cache images for 7 days (images don't change)
+app.use('/img', (req, res, next) => {
+    res.set('Cache-Control', 'public, max-age=604800');
+    next();
+});
+
+// Cache other static assets for 1 day
+app.use(express.static(publicDir, {
+    maxAge: '1d',
+    etag: false,
+}));
 app.use(bodyParser.json());
 
 const coords = require(path.join(__dirname, 'data', 'challs.json'));

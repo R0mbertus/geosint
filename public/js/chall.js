@@ -118,7 +118,7 @@ function initPanorama() {
         width: tileSize * pano_width,
         cols: pano_width,
         rows: pano_height,
-        tileUrl: (col, row) => `${origin}/img/${challName}/tile_${col}_${row}_${maxZ}.jpeg`,
+        tileUrl: (col, row) => `${origin}/img/${challName}/tile_${col}_${row}_${maxZ}.webp`,
     };
 
     // eslint-disable-next-line no-new
