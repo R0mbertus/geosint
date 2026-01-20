@@ -136,7 +136,7 @@ async function initialize() {
     check_count = 0;
 
     document.getElementById('chall-title').innerHTML = '<h2>' + challName + '</h2>';
-    document.getElementById('chall-result').innerHTML = 'Result: ';
+    document.getElementById('chall-result').innerHTML = 'Submit a guess below';
 
     initMap();
     initPanorama();
@@ -153,7 +153,7 @@ async function submit() {
     });
 
     const text = await resp.text();
-    document.getElementById('chall-result').innerHTML = text;
+    document.getElementById('chall-result').innerHTML = `Result: ${text}`;
 }
 
 export function boot({ Viewer, EquirectangularTilesAdapter }) {
